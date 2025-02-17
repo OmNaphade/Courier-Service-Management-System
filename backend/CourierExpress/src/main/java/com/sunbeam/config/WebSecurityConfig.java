@@ -35,7 +35,7 @@ public class WebSecurityConfig {
                 .authorizeHttpRequests(request -> request
                         .requestMatchers("/admin").permitAll()
                         .requestMatchers("/admin/login").permitAll()
-                        .requestMatchers("/admin/**").hasAuthority("ADMIN")
+                        .requestMatchers("/admin/**").hasAuthority("ADMIN") //
                         .requestMatchers("/delivery-agents").permitAll() // Allow access to admin authentication endpoint
                         .requestMatchers("/delivery-agents/login").permitAll()
                         .requestMatchers("/delivery-agents/**").hasAuthority("DeliveryAgent")  // Allow access to admin authentication endpoint
