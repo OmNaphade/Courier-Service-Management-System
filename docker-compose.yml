@@ -1,7 +1,7 @@
 version: '3.8'
 services:
   backend:
-    image: ghcr.io/${{ github.repository }}/backend:latest
+    image: ${BACKEND_IMAGE}
     ports:
       - "8080:8080"
     environment:
@@ -9,7 +9,7 @@ services:
     depends_on:
       - db
   frontend:
-    image: ghcr.io/${{ github.repository }}/frontend:latest
+    image: ${FRONTEND_IMAGE}
     ports:
       - "3000:3000"
     depends_on:
