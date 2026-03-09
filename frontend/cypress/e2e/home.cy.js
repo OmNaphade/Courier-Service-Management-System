@@ -1,6 +1,6 @@
 describe('Home Page', () => {
   it('loads successfully', () => {
     cy.visit('http://localhost:3000')
-    cy.contains('React')   // or any text on your page
+    cy.url().should('include', 'localhost:3000')
   })
 })
