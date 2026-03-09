@@ -10,6 +10,11 @@ permissions:
   contents: read
   packages: write
 
+env:
+  OWNER: ${{ github.repository_owner }}
+  FRONTEND_IMAGE: ghcr.io/${{ github.repository_owner }}/courier-service-management-system-frontend:latest
+  BACKEND_IMAGE: ghcr.io/${{ github.repository_owner }}/courier-service-management-system-backend:latest
+
 jobs:
 
   backend:
@@ -42,10 +47,6 @@ jobs:
           cd CourierExpress
           mvn package -DskipTests
 
-      - name: Build Backend Docker Image
-        run: |
-          docker build -t backend:latest ./CourierExpress
-
       - name: Login to GHCR
         uses: docker/login-action@v3
         with:
@@ -53,12 +54,10 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Push Backend Image
+      - name: Build and Push Backend Image
         run: |
-          OWNER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
-          IMAGE_NAME=ghcr.io/$OWNER/courier-service-management-system-backend:latest
-          docker tag backend:latest $IMAGE_NAME
-          docker push $IMAGE_NAME
+          docker build -t $BACKEND_IMAGE ./CourierExpress
+          docker push $BACKEND_IMAGE
 
 
   frontend:
@@ -98,10 +97,6 @@ jobs:
           wait-on: http://localhost:3000
           wait-on-timeout: 120
 
-      - name: Build Frontend Docker Image
-        run: |
-          docker build -t frontend:latest ./frontend
-
       - name: Login to GHCR
         uses: docker/login-action@v3
         with:
@@ -109,12 +104,10 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Push Frontend Image
+      - name: Build and Push Frontend Image
         run: |
-          OWNER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
-          IMAGE_NAME=ghcr.io/$OWNER/courier-service-management-system-frontend:latest
-          docker tag frontend:latest $IMAGE_NAME
-          docker push $IMAGE_NAME
+          docker build -t $FRONTEND_IMAGE ./frontend
+          docker push $FRONTEND_IMAGE
 
 
   deploy:
