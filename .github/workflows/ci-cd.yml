@@ -51,7 +51,8 @@ jobs:
 
       - name: Push Backend Image
         run: |
-          IMAGE_NAME=ghcr.io/${{ github.repository_owner }}/courier-service-management-system-backend:latest
+          OWNER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
+          IMAGE_NAME=ghcr.io/$OWNER/courier-service-management-system-backend:latest
           docker tag backend:latest $IMAGE_NAME
           docker push $IMAGE_NAME
 
@@ -66,7 +67,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: '20'
 
       - name: Cache Node modules
         uses: actions/cache@v4
@@ -103,7 +104,8 @@ jobs:
 
       - name: Push Frontend Image
         run: |
-          IMAGE_NAME=ghcr.io/${{ github.repository_owner }}/courier-service-management-system-frontend:latest
+          OWNER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
+          IMAGE_NAME=ghcr.io/$OWNER/courier-service-management-system-frontend:latest
           docker tag frontend:latest $IMAGE_NAME
           docker push $IMAGE_NAME
 
