@@ -8,12 +8,13 @@ This repository contains the full stack application for parcel booking, delivery
 
 ## What it does
 
-- Customer login, registration, profile, bookings, and order history
-- Delivery partner login, registration, dashboard, and order handling
-- Admin dashboard for customers, agents, packages, and feedback
-- Role-aware routing and protected pages
-- REST API backed by Spring Boot and JPA
-- JWT-based authentication and security
+- Customer login, registration, profile, bike/truck bookings, and order history
+- Delivery partner login, registration, dashboard, available/current/completed orders, and profile management
+- Admin dashboard for viewing customers, managing delivery agents, and confirming payment on packages
+- Separate login and landing pages per role (customer, delivery partner, admin)
+- REST API backed by Spring Boot and JPA, secured with role-based JWT authentication (`ADMIN`, `Customer`, `DeliveryAgent` authorities)
+- Contact form wired to EmailJS
+- Dockerfiles for both apps, a docker-compose stack, and a GitHub Actions CI/CD pipeline that builds, tests, and publishes images to GHCR
 
 ---
 
@@ -41,7 +42,11 @@ This repository contains the full stack application for parcel booking, delivery
 ```text
 Courier-Service-Management-System/
 ├── README.md
+├── docker-compose.yml
+├── .github/workflows/ci-cd.yml
 ├── frontend/
+│   ├── Dockerfile
+│   ├── cypress/
 │   └── src/
 │       ├── Admin/
 │       ├── Auths/
@@ -52,6 +57,7 @@ Courier-Service-Management-System/
 │       ├── Services/
 │       └── http-common.js
 └── CourierExpress/
+    ├── Dockerfile
     └── src/
         ├── main/
         │   ├── java/com/sunbeam/
@@ -70,10 +76,12 @@ Courier-Service-Management-System/
 
 The React app handles:
 
-- landing page, about page, and contact form
+- landing page, about page, and contact form (EmailJS)
 - user, delivery partner, and admin authentication
-- bookings, order views, and dashboard pages
-- notifications and protected navigation
+- bookings (bike/truck), order views, and role-specific dashboard pages
+- toast notifications for API/action feedback (`react-toastify`)
+
+> A `ProtectedRoute` component (JWT-aware route guard) exists in `src/Auths/` but is currently unused — all routes in `src/App.js` are open by path, and access is enforced only by what each page's API calls allow.
 
 ### Frontend setup
 
@@ -102,11 +110,11 @@ The frontend expects the backend at `http://localhost:8080` through `frontend/sr
 
 The Spring Boot app provides the REST APIs for customers, delivery partners, and admins. It includes:
 
-- controllers for each user role
+- controllers for each user role (`/customers`, `/delivery-agents`, `/admin`)
 - service and repository layers
-- JWT authentication and Spring Security
-- JPA entities for orders, customers, agents, and admins
-- Swagger UI for API exploration
+- JWT authentication and role-based authorization via Spring Security (`ADMIN`, `Customer`, `DeliveryAgent` authorities)
+- JPA entities for orders, customers, delivery agents, and admins
+- Swagger UI for API exploration, available at `/swagger-ui.html` once the app is running
 
 ### Backend setup
 
@@ -146,11 +154,31 @@ Do not commit real secrets or private credentials.
 
 ---
 
+## Docker and CI/CD
+
+- `CourierExpress/Dockerfile` builds the backend from the packaged jar (`target/*.jar`, so run `mvn package` first)
+- `frontend/Dockerfile` builds and serves the React app
+- `docker-compose.yml` at the repo root wires up `backend`, `frontend`, and a `mysql:8.0` `db` service (expects `BACKEND_IMAGE`/`FRONTEND_IMAGE` env vars pointing at built images)
+- `.github/workflows/ci-cd.yml` runs on every push/PR to `main`:
+  - backend job: `mvn clean test`, `mvn package`, builds and pushes the backend image to GHCR
+  - frontend job: `npm ci`, Jest tests with coverage, Cypress e2e run, builds and pushes the frontend image to GHCR
+  - deploy job (main branch pushes only): pulls the published images and runs `docker compose up -d`
+
+---
+
 ## Main user flows
 
-- **Customers** can browse the site, register, log in, and create bookings
-- **Delivery partners** can log in, manage assigned orders, and update status
-- **Admins** can manage packages, users, agents, and feedback
+- **Customers** can browse the site, register, log in, book a bike or truck delivery, and view their order history
+- **Delivery partners** can log in, view available orders, accept and complete deliveries, and update their profile
+- **Admins** can log in, view customers, view/delete delivery agents, and mark packages as paid
+
+---
+
+## Known limitations
+
+- The feedback/testimonial pages (`frontend/src/Admin/Feedback.jsx`, `frontend/src/Delivery/Feedbacks.jsx`) are static UI content (placeholder text/reviews) — there is no feedback entity, endpoint, or admin management for it yet
+- Route guarding (`ProtectedRoute`) is implemented but not wired into `App.js`, so pages are reachable by direct URL regardless of login state; the backend still enforces authorization on API calls
+- Backend automated tests currently cover only application context startup (`DemoApplicationTests`); there is no service/controller-level test suite yet
 
 ---
 
